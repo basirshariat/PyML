@@ -29,7 +29,7 @@ class PairDataSet (WrapperDataSet, cpairdataset.PairDataSet) :
     """
 
     isVector = False
-    
+
     def __init__(self, arg, **args) :
         """
         :Parameters:
@@ -42,8 +42,8 @@ class PairDataSet (WrapperDataSet, cpairdataset.PairDataSet) :
           - `patterns` - patterns to copy when performing copy construction
         """
         BaseDataSet.__init__(self, arg, **args)
-            
-    def copy(self, other, patterns, deepcopy) :
+
+    def copy(self, other, patterns, deepcopy):
 
         self.callCopyConstructor(other, patterns)
         self.pairs = [other.pairs[p] for p in patterns]
@@ -74,19 +74,19 @@ class PairDataSet (WrapperDataSet, cpairdataset.PairDataSet) :
         first = [pair[0] for pair in pairs]
         second = [pair[1] for pair in pairs]
         firstVector = arrayWrap.intVector([pair[0] for pair in pairs])
-        secondVector = arrayWrap.intVector([pair[1] for pair in pairs])            
+        secondVector = arrayWrap.intVector([pair[1] for pair in pairs])
         self.callConstructor(firstVector, secondVector)
 
         WrapperDataSet.attachLabels(self, labels)
 
 
     def callConstructor(self, firstVector, secondVector) :
-        
+
         cpairdataset.PairDataSet.__init__(self, firstVector, secondVector,
                                           self._data.castToBase())
 
     def callCopyConstructor(self, other, patterns) :
-        
+
         cpairdataset.PairDataSet.__init__(self, other, patterns)
 
     def __len__(self) :
@@ -96,7 +96,7 @@ class PairDataSet (WrapperDataSet, cpairdataset.PairDataSet) :
     def getPair(self, i) :
 
         return tuple(self.labels.patternID[i].split())
-        
+
 class SimplePairDataSet (BaseDataSet) :
 
     """
@@ -109,7 +109,7 @@ class SimplePairDataSet (BaseDataSet) :
     """
 
     isVector = False
-    
+
     def __init__(self, arg, **args) :
         """
         :Parameters:
@@ -149,7 +149,7 @@ class SimplePairDataSet (BaseDataSet) :
                                            range(len(self.data)))
         else :
             patternIDdict = {}
-            
+
         L = []
         patternID = []
         pairs = []
@@ -176,8 +176,8 @@ class SimplePairDataSet (BaseDataSet) :
     def getPair(self, i) :
 
         return tuple(self.labels.patternID[i].split())
-        
-    
+
+
 class PairDataSetSum (PairDataSet, cpairdataset.PairDataSetSum) :
 
     def __init__(self, arg, **args) :
@@ -185,18 +185,18 @@ class PairDataSetSum (PairDataSet, cpairdataset.PairDataSetSum) :
         PairDataSet.__init__(self, arg, **args)
 
     def callConstructor(self, firstVector, secondVector) :
-        
+
         cpairdataset.PairDataSetSum.__init__(self, firstVector, secondVector,
                                              self._data.castToBase())
 
     def callCopyConstructor(self, other, patterns) :
-        
+
         cpairdataset.PairDataSetSum.__init__(self, other, patterns)
 
     def dotProduct(self, i, j, other = None) :
 
         return cpairdataset.PairDataSetSum.dotProduct(self, i, j, other)
-    
+
 
 class PairDataSetOrd (PairDataSet, cpairdataset.PairDataSetOrd) :
 
@@ -205,12 +205,12 @@ class PairDataSetOrd (PairDataSet, cpairdataset.PairDataSetOrd) :
         PairDataSet.__init__(self, arg, **args)
 
     def callConstructor(self, firstVector, secondVector) :
-        
+
         cpairdataset.PairDataSetOrd.__init__(self, firstVector, secondVector,
                                              self._data.castToBase())
 
     def callCopyConstructor(self, other, patterns) :
-        
+
         cpairdataset.PairDataSetOrd.__init__(self, other, patterns)
 
     def dotProduct(self, i, j, other = None) :

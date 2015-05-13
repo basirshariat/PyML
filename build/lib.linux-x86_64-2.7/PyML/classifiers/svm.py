@@ -1,20 +1,19 @@
-import os
-import random
 import numpy
+from numpy.numarray import array
 
 from PyML.utils import misc
 from PyML.classifiers.baseClassifiers import Classifier
-from PyML.classifiers.ext.libsvm import C_SVC, NU_SVC, ONE_CLASS, EPSILON_SVR, NU_SVR
-from PyML.classifiers.ext.libsvm import LINEAR, POLY, RBF, SIGMOID, PRECOMPUTED
-from PyML.classifiers.ext import csvmodel, libsvm, mylibsvm
+from PyML.classifiers.ext.libsvm import C_SVC, ONE_CLASS, EPSILON_SVR, NU_SVR
+from PyML.classifiers.ext.libsvm import LINEAR, POLY, RBF, SIGMOID
+from PyML.classifiers.ext import libsvm, mylibsvm
 from PyML.classifiers.ext import csvmodel
 from PyML.classifiers.liblinear import mylinear
 from PyML.utils import arrayWrap
 from PyML.evaluators import assess, resultsObjects
-from PyML.containers.vectorDatasets import VectorDataSet, SparseDataSet
-from PyML.containers import ker
+from PyML.containers.vectorDatasets import VectorDataSet
 from PyML.classifiers.ext import csmo
 from PyML.classifiers.ext import cgist
+from PyML.classifiers.ext import pegasos
 
 
 """various flavors of SVMs and training algorithms"""
@@ -24,6 +23,7 @@ __docformat__ = "restructuredtext en"
 containersNotSupported = ['PySparseDataSet', 'PyVectorDataSet']
 
 
+# noinspection PyPep8Naming
 class SVM(Classifier):
     """
     An SVM classifier class.
@@ -34,7 +34,7 @@ class SVM(Classifier):
 
     svm_type = C_SVC
     attributes = {'C': 10,
-                  'nu': 0.5,
+                  # 'nu': 0.5,
                   'Cmode': 'classProb',
                   'optimizer': 'libsvm',
                   'cacheSize': 256,
@@ -159,9 +159,10 @@ class SVM(Classifier):
             alpha, b, svID = self.trainGist(data, **args)
         elif self.optimizer == 'gradient':
             alpha, b, svID = self.trainGradient(data, **args)
+        elif self.optimizer == 'pegasos':
+            alpha, b, svID = self.trainPegasos(data, **args)
         else:
             alpha, b, svID = self.trainMySMO(data, **args)
-
         if isPrimal:
             self.model = modelDispatcher(data, w=w, b=b)
         else:
@@ -290,6 +291,31 @@ class SVM(Classifier):
 
         return alpha, b, svID
 
+    def trainPegasos(self, data, **args):
+        if data.labels.numClasses != 2:
+            raise ValueError('svm is a two class classifier')
+        print 'training using Pegasos'
+        if 'lambda' in args:
+            the_lambda = args['lambda']
+        else:
+            the_lambda = 0.002
+
+        if 'epsilon' in args:
+            epsilon = args['epsilon']
+            if epsilon > 1:
+                raise ValueError('epsilon should be less than one')
+            number_of_iteration = int(1 / epsilon)
+        else:
+            number_of_iteration = int(len(data) * 1)
+        # data.addFeature('bias', [1] * len(data))
+        alpha = arrayWrap.doubleVector2list(pegasos.runPegasos(data.castToBase(), the_lambda, number_of_iteration))
+        svID = [i for i in range(len(alpha)) if alpha[i] > 0]
+        alpha = [alpha[i] * (data.labels.Y[i] * 2 - 1) for i in range(len(alpha)) if alpha[i] > 0]
+        # alpha = alpha[:-1]
+        # b = alpha[-1]
+        b = 0
+        # data.eliminateFeatures(['bias'])
+        return alpha, b, svID
 
     def trainMySMO(self, data, **args):
 
@@ -331,7 +357,6 @@ class SVM(Classifier):
         return self.model.decisionFunc(data, i)
 
     def classify(self, data, i):
-
         margin = self.decisionFunc(data, i)
         if margin > 0:
             return (1, margin)
